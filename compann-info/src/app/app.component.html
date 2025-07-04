@@ -1,0 +1,19 @@
+<nav class="navbar">
+  <div class="navbar-brand">
+    <a routerLink="/">Company Analyzer</a>
+  </div>
+  <div class="navbar-links">
+    <ul *ngIf="isAuthenticated">
+      <li><a routerLink="/dashboard">Dashboard</a></li>
+      <li><button (click)="logout()" class="logout-button">Logout</button></li>
+    </ul>
+    <ul *ngIf="!isAuthenticated">
+      <li><a routerLink="/login">Login</a></li>
+      <li><a routerLink="/register">Register</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="container">
+  <router-outlet></router-outlet>
+</div>

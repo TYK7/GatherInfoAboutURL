@@ -1,0 +1,49 @@
+/* Global styles for AppComponent can go here or in styles.scss */
+
+.navbar {
+  background-color: #333;
+  color: white;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar-brand a {
+  color: white;
+  text-decoration: none;
+  font-size: 1.5em;
+}
+
+.navbar-links ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+}
+
+.navbar-links li {
+  margin-left: 15px;
+}
+
+.navbar-links a, .navbar-links .logout-button {
+  color: white;
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1em;
+  padding: 5px;
+}
+
+.navbar-links a:hover, .navbar-links .logout-button:hover {
+  text-decoration: underline;
+}
+
+.logout-button {
+  font-family: inherit; /* Ensure button font matches link font */
+}
+
+.container {
+  padding: 20px;
+}

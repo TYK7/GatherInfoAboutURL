@@ -1,0 +1,161 @@
+<div class="dashboard-container">
+  <h1>Welcome to the Dashboard<span *ngIf="username">, {{ username }}</span>!</h1>
+  <p>This is a protected area.</p>
+
+  <div class="url-submission-form card">
+    <h2>Analyze Company Website</h2>
+    <form [formGroup]="urlForm" (ngSubmit)="submitUrl()">
+      <div class="form-group">
+        <label for="urlToExtract">Website URL:</label>
+        <input
+          type="text"
+          id="urlToExtract"
+          formControlName="urlToExtract"
+          class="url-input"
+          placeholder="e.g., https://www.example.com"
+          [ngClass]="{ 'is-invalid': urlForm.get('urlToExtract')?.touched && urlForm.get('urlToExtract')?.invalid }"
+        />
+        <div *ngIf="urlForm.get('urlToExtract')?.touched && urlForm.get('urlToExtract')?.invalid" class="invalid-feedback">
+          <div *ngIf="urlForm.get('urlToExtract')?.errors?.['required']">URL is required.</div>
+          <div *ngIf="urlForm.get('urlToExtract')?.errors?.['pattern']">Please enter a valid URL (e.g., http://example.com or https://example.com).</div>
+        </div>
+      </div>
+      <button type="submit" [disabled]="urlForm.invalid" class="submit-button">Analyze</button>
+    </form>
+
+    <div *ngIf="extractionError" class="alert alert-danger mt-3">
+      <p><strong>Error:</strong> {{ extractionError }}</p>
+      <p *ngIf="extractionResult?.details"><strong>Details:</strong> {{ extractionResult?.details }}</p>
+    </div>
+
+    <div *ngIf="extractionResult && !extractionResult.error && !extractionResult.title?.startsWith('Error:')" class="alert alert-info mt-3 results-card">
+      <h3>Extraction Results for: {{ extractionResult.requestedUrl }}</h3>
+
+      <div *ngIf="extractionResult.title">
+        <strong>Title:</strong> <p>{{ extractionResult.title }}</p>
+      </div>
+
+      <div *ngIf="extractionResult.metaDescription">
+        <strong>Meta Description:</strong> <p>{{ extractionResult.metaDescription }}</p>
+      </div>
+
+      <div *ngIf="extractionResult.imageUrls && extractionResult.imageUrls.length > 0">
+        <strong>Standard Images (<code>&lt;img&gt;</code> tags):</strong>
+        <ul>
+          <li *ngFor="let img of extractionResult.imageUrls">
+            <a href="{{img}}" target="_blank" rel="noopener noreferrer">{{ img | slice:0:100 }}{{img.length > 100 ? '...' : ''}}</a>
+          </li>
+        </ul>
+      </div>
+
+      <div *ngIf="extractionResult.ogImageUrls && extractionResult.ogImageUrls.length > 0">
+        <strong>OpenGraph Images (<code>og:image</code>):</strong>
+        <ul>
+          <li *ngFor="let img of extractionResult.ogImageUrls">
+            <a href="{{img}}" target="_blank" rel="noopener noreferrer">{{ img | slice:0:100 }}{{img.length > 100 ? '...' : ''}}</a>
+          </li>
+        </ul>
+      </div>
+
+      <div *ngIf="extractionResult.openGraphTags && objectKeys(extractionResult.openGraphTags).length > 0">
+        <strong>OpenGraph Meta Tags:</strong>
+        <ul>
+          <li *ngFor="let key of objectKeys(extractionResult.openGraphTags)">
+            <strong>{{ key }}:</strong> {{ extractionResult.openGraphTags[key] }}
+          </li>
+        </ul>
+      </div>
+
+      <div *ngIf="extractionResult.twitterTags && objectKeys(extractionResult.twitterTags).length > 0">
+        <strong>Twitter Meta Tags:</strong>
+        <ul>
+          <li *ngFor="let key of objectKeys(extractionResult.twitterTags)">
+            <strong>{{ key }}:</strong> {{ extractionResult.twitterTags[key] }}
+          </li>
+        </ul>
+      </div>
+
+      <div *ngIf="extractionResult.socialMediaLinks && extractionResult.socialMediaLinks.length > 0">
+        <strong>Identified Social Media Links:</strong>
+        <ul>
+          <li *ngFor="let link of extractionResult.socialMediaLinks">
+            <a href="{{link}}" target="_blank" rel="noopener noreferrer">{{ link }}</a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="categorization-summary mt-3">
+        <h4>Basic Categorization:</h4>
+        <p *ngIf="extractionResult.imageCount !== undefined && extractionResult.imageCount !== null">
+          <strong>Total Images Found (standard + OG):</strong> {{ extractionResult.imageCount }}
+        </p>
+        <p *ngIf="extractionResult.openGraphTagCount !== undefined && extractionResult.openGraphTagCount !== null">
+          <strong>OpenGraph Meta Tags Count:</strong> {{ extractionResult.openGraphTagCount }}
+        </p>
+        <p *ngIf="extractionResult.twitterTagCount !== undefined && extractionResult.twitterTagCount !== null">
+          <strong>Twitter Meta Tags Count:</strong> {{ extractionResult.twitterTagCount }}
+        </p>
+        <p *ngIf="extractionResult.hasFavicon !== undefined && extractionResult.hasFavicon !== null">
+          <strong>Favicon Detected:</strong> {{ extractionResult.hasFavicon ? 'Yes' : 'No' }}
+        </p>
+      </div>
+
+      <!-- AI Analysis Section -->
+      <div class="ai-analysis-section mt-4" *ngIf="extractionResult && !extractionResult.title?.startsWith('Error:')">
+        <button
+          (click)="getAIAnalysis()"
+          [disabled]="!canGetAiAnalysis()"
+          class="btn btn-success">
+          <span *ngIf="!isLoadingAiAnalysis">Get AI Analysis</span>
+          <span *ngIf="isLoadingAiAnalysis">Loading AI Analysis...</span>
+        </button>
+
+        <div *ngIf="aiAnalysisError" class="alert alert-danger mt-3">
+          {{ aiAnalysisError }}
+        </div>
+
+        <div *ngIf="aiAnalysisResult" class="alert alert-light mt-3 results-card">
+          <h4>AI-Powered Company Analysis:</h4>
+          <p><strong>Overall Summary:</strong> {{ aiAnalysisResult.summary }}</p>
+
+          <div *ngIf="aiAnalysisResult.pros && aiAnalysisResult.pros.length > 0" class="mt-2">
+            <h5>Pros:</h5>
+            <ul>
+              <li *ngFor="let pro of aiAnalysisResult.pros">{{ pro }}</li>
+            </ul>
+          </div>
+
+          <div *ngIf="aiAnalysisResult.cons && aiAnalysisResult.cons.length > 0" class="mt-2">
+            <h5>Cons:</h5>
+            <ul>
+              <li *ngFor="let con of aiAnalysisResult.cons">{{ con }}</li>
+            </ul>
+          </div>
+
+          <div *ngIf="aiAnalysisResult.opportunities && aiAnalysisResult.opportunities.length > 0" class="mt-2">
+            <h5>Opportunities:</h5>
+            <ul>
+              <li *ngFor="let opp of aiAnalysisResult.opportunities">{{ opp }}</li>
+            </ul>
+          </div>
+
+          <div *ngIf="aiAnalysisResult.redFlags && aiAnalysisResult.redFlags.length > 0" class="mt-2">
+            <h5>Red Flags:</h5>
+            <ul>
+              <li *ngFor="let flag of aiAnalysisResult.redFlags">{{ flag }}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Specific handling for error messages returned in the title field from backend -->
+    <div *ngIf="extractionResult && extractionResult.title?.startsWith('Error:')" class="alert alert-warning mt-3">
+        <p><strong>Extraction Note:</strong> {{ extractionResult.title }}</p>
+        <p *ngIf="extractionResult.requestedUrl">URL: {{ extractionResult.requestedUrl }}</p>
+    </div>
+
+  </div>
+
+  <!-- Future content will go here: display for extracted data, AI summary, etc. -->
+</div>
